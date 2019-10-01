@@ -127,7 +127,7 @@ class TimeCache : public TimeCacheInterface
   virtual TimePoint getOldestTimestamp();
   
 
-private:
+protected: // MOD: Allow inherited classes to use
   typedef std::list<TransformStorage> L_TransformStorage;
   L_TransformStorage storage_;
 
@@ -177,6 +177,35 @@ private:
   TransformStorage  storage_;
 };
 
-}
+
+// TODO: Move!
+// Additional input parameters are needed here to support long term frame storage.
+struct CacheCreatorInterface
+{
+  virtual TimeCacheInterfacePtr createCache(bool is_static,
+                                            const std::string & parent_frame,
+                                            const std::string & child_frame,
+                                            const CompactFrameID parent_id,
+                                            const CompactFrameID child_id) = 0;
+};
+typedef std::shared_ptr<CacheCreatorInterface> CacheCreatorPtr;
+
+/// Create a TimeCache object which keeps data in memory for a fixed amount of time.
+class TimeCacheCreator : public CacheCreatorInterface
+{
+  Duration cache_time_;
+public:
+  TimeCacheCreator(Duration cache_time)
+    : cache_time_(cache_time) {}
+
+  virtual TimeCacheInterfacePtr createCache(bool is_static,
+                                            const std::string & parent_frame,
+                                            const std::string & child_frame,
+                                            const CompactFrameID parent_id,
+                                            const CompactFrameID child_id);
+}; // End class TimeCacheCreator
+
+
+} // end namespace tf2
 
 #endif // TF2_TIME_CACHE_H

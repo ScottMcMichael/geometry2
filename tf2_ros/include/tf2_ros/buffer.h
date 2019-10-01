@@ -41,6 +41,7 @@
 #include <tf2_ros/create_timer_interface.h>
 #include <tf2_ros/visibility_control.h>
 #include <tf2/buffer_core.h>
+#include <tf2/time_cache.h> // TODO: Remove?
 #include <tf2_msgs/srv/frame_graph.hpp>
 #include <rclcpp/rclcpp.hpp>
 //TODO(tfoote)  review removal #include <tf2/convert.h>
@@ -68,7 +69,11 @@ namespace tf2_ros
      * @param debug Whether to advertise the view_frames service that exposes debugging information from the buffer
      * @return 
      */
-    TF2_ROS_PUBLIC Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time = tf2::Duration(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME));
+    TF2_ROS_PUBLIC Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time);
+    
+    
+    TF2_ROS_PUBLIC Buffer(rclcpp::Clock::SharedPtr clock,
+                          tf2::CacheCreatorPtr ptr = tf2::CacheCreatorPtr());
 
     /** \brief Get the transform between two frames by frame ID.
      * \param target_frame The frame to which data should be transformed
