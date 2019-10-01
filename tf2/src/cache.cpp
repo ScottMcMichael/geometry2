@@ -299,6 +299,19 @@ void TimeCache::pruneList()
   {
     storage_.pop_back();
   }
+}
+
+TimeCacheInterfacePtr 
+TimeCacheCreator::createCache(bool is_static,
+                              const std::string & parent_frame,
+                              const std::string & child_frame,
+                              const CompactFrameID parent_id,
+                              const CompactFrameID child_id)
+{
+  if (is_static)
+    return TimeCacheInterfacePtr(new StaticCache());
+  else
+    return TimeCacheInterfacePtr(new TimeCache(cache_time_));
+}
   
 } // namespace tf2
-}

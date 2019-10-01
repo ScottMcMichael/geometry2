@@ -61,6 +61,8 @@ typedef uint64_t TransformableRequestHandle;
 
 class TimeCacheInterface;
 using TimeCacheInterfacePtr = std::shared_ptr<TimeCacheInterface>;
+class CacheCreatorInterface;
+using CacheCreatorPtr = std::shared_ptr<CacheCreatorInterface>;
 
 enum TransformableResult
 {
@@ -96,13 +98,19 @@ public:
   TF2_PUBLIC
   static const uint32_t MAX_GRAPH_DEPTH = 1000UL;  //!< Maximum graph search depth (deeper graphs will be assumed to have loops)
 
+
   /** Constructor
    * \param interpolating Whether to interpolate, if this is false the closest value will be returned
    * \param cache_time How long to keep a history of transforms in nanoseconds
    *
    */
   TF2_PUBLIC
-  BufferCore(tf2::Duration cache_time_ = BUFFER_CORE_DEFAULT_CACHE_TIME);
+  BufferCore(tf2::Duration cache_time_);
+
+  // MOD
+  /** \brief Flexible constructor that works with other cache types*/
+  TF2_PUBLIC
+  BufferCore(CacheCreatorPtr ptr=CacheCreatorPtr());
 
   TF2_PUBLIC
   virtual ~BufferCore(void);
@@ -314,9 +322,10 @@ public:
     return validateFrameId(function_name_arg, frame_id);
   }
 
+  //MOD: Disabled because this parameter is removed
   /**@brief Get the duration over which this transformer will cache */
-  TF2_PUBLIC
-  tf2::Duration getCacheLength() { return cache_time_;}
+//  TF2_PUBLIC
+//  tf2::Duration getCacheLength() { return cache_time_;}
 
   /** \brief Backwards compatabilityA way to see what frames have been cached
    * Useful for debugging
@@ -359,8 +368,8 @@ private:
   std::map<CompactFrameID, std::string> frame_authority_;
 
 
-  /// How long to cache transform history
-  tf2::Duration cache_time_;
+  /// Pointer to the cache creator object
+  CacheCreatorPtr cache_creator_ptr_;
 
   typedef std::unordered_map<TransformableCallbackHandle, TransformableCallback> M_TransformableCallback;
   M_TransformableCallback transformable_callbacks_;
@@ -406,7 +415,8 @@ private:
    */
   TimeCacheInterfacePtr getFrame(CompactFrameID c_frame_id) const;
 
-  TimeCacheInterfacePtr allocateFrame(CompactFrameID cfid, bool is_static);
+  //MOD: Replaced by new cache creator
+  //TimeCacheInterfacePtr allocateFrame(CompactFrameID cfid, bool is_static);
 
   /** \brief Validate a frame ID format and look up its CompactFrameID.
     *   For invalid cases, produce an message.
@@ -456,7 +466,8 @@ private:
   template<typename F>
   tf2::TF2Error walkToTopParent(F& f, TimePoint time, CompactFrameID target_id, CompactFrameID source_id, std::string* error_string, std::vector<CompactFrameID> *frame_chain) const;
 
-  void testTransformableRequests();
+  //MOD: Depends on cache time existing
+  //void testTransformableRequests();
   // Thread safe transform check, acquire lock and call canTransformNoLock.
   bool canTransformInternal(CompactFrameID target_id, CompactFrameID source_id,
                     const TimePoint& time, std::string* error_msg) const;

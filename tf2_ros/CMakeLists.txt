@@ -16,13 +16,15 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
+find_package(tf2 0.11.3 EXACT REQUIRED HINTS /home/smcmich1/vipersim_ws/install/tf2)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
 
-include_directories(include)
+list(REMOVE_ITEM tf2_INCLUDE_DIRS /opt/ros/dashing/include)
+
+include_directories(include ${tf2_INCLUDE_DIRS})
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR src/${PROJECT_NAME})
 
 # tf2_ros library
@@ -37,11 +39,11 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 ament_target_dependencies(${PROJECT_NAME}
+  "tf2"
   "geometry_msgs"
   "message_filters"
   "rclcpp"
   "rclcpp_action"
-  "tf2"
   "tf2_msgs"
 )
 
@@ -53,10 +55,10 @@ target_link_libraries(buffer_server
   ${PROJECT_NAME}
 )
 ament_target_dependencies(buffer_server
+  "tf2"
   "geometry_msgs"
   "rclcpp"
   "rclcpp_action"
-  "tf2"
   "tf2_msgs"
 )
 
