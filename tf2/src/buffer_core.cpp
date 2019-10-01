@@ -211,14 +211,30 @@ CompactFrameID BufferCore::validateFrameId(
 }
 
 BufferCore::BufferCore(tf2::Duration cache_time)
-: cache_time_(cache_time),
-  transformable_callbacks_counter_(0),
-  transformable_requests_counter_(0),
-  using_dedicated_thread_(false)
+: //cache_time_(cache_time) // TODO: Delete this??
+ transformable_callbacks_counter_(0)
+, transformable_requests_counter_(0)
+, using_dedicated_thread_(false)
 {
   frameIDs_["NO_PARENT"] = 0;
   frames_.push_back(TimeCacheInterfacePtr());
   frameIDs_reverse_.push_back("NO_PARENT");
+  cache_creator_ptr_.reset(new TimeCacheCreator(cache_time));
+}
+
+BufferCore::BufferCore(CacheCreatorPtr ptr)
+: //cache_time_(cache_time) // TODO: Delete this??
+ transformable_callbacks_counter_(0)
+, transformable_requests_counter_(0)
+, using_dedicated_thread_(false)
+{
+  frameIDs_["NO_PARENT"] = 0;
+  frames_.push_back(TimeCacheInterfacePtr());
+  frameIDs_reverse_.push_back("NO_PARENT");
+  if (ptr)
+    cache_creator_ptr_ = ptr;
+  else // No object passed in, use the default cache creation strategy.
+    cache_creator_ptr_.reset(new TimeCacheCreator(BUFFER_CORE_DEFAULT_CACHE_TIME));
 }
 
 BufferCore::~BufferCore() {}
@@ -329,11 +345,20 @@ bool BufferCore::setTransformImpl(
 
   {
     std::unique_lock<std::mutex> lock(frame_mutex_);
-    CompactFrameID frame_number = lookupOrInsertFrameNumber(stripped_child_frame_id);
+    CompactFrameID frame_number        = lookupOrInsertFrameNumber(stripped_child_frame_id);
+    CompactFrameID parent_frame_number = lookupOrInsertFrameNumber(stripped_frame_id      );
     TimeCacheInterfacePtr frame = getFrame(frame_number);
-    if (frame == NULL) {
-      frame = allocateFrame(frame_number, is_static);
+    if (frame == NULL)
+    {
+      frame = cache_creator_ptr_->createCache(is_static, 
+                                              stripped_frame_id,
+                                              stripped_child_frame_id,
+                                              parent_frame_number,
+                                              frame_number);
+      frames_[frame_number] = frame;
     } else {
+      // TODO: This logic is incomplete as it does not handle any other derived
+      //       types!
       // Overwrite TimeCacheInterface type with a current input
       const TimeCache * time_cache_ptr = dynamic_cast<TimeCache *>(frame.get());
       const StaticCache * static_cache_ptr = dynamic_cast<StaticCache *>(frame.get());
@@ -344,38 +369,38 @@ bool BufferCore::setTransformImpl(
       }
     }
 
-    if (frame->insertData(
-        TransformStorage(
-          stamp, transform_in.getRotation(),
-          transform_in.getOrigin(), lookupOrInsertFrameNumber(stripped_frame_id), frame_number)))
-    {
-      frame_authority_[frame_number] = authority;
-    } else {
-      std::string stamp_str = displayTimePoint(stamp);
-      CONSOLE_BRIDGE_logWarn(
-        "TF_OLD_DATA ignoring data from the past for frame %s at time %s according to authority"
-        " %s\nPossible reasons are listed at http://wiki.ros.org/tf/Errors%%20explained",
-        stripped_child_frame_id.c_str(), stamp_str.c_str(), authority.c_str());
-      return false;
-    }
+  if (frame->insertData(
+      TransformStorage(
+        stamp, transform_in.getRotation(),
+        transform_in.getOrigin(), lookupOrInsertFrameNumber(stripped_frame_id), frame_number)))
+  {
+    frame_authority_[frame_number] = authority;
+  } else {
+    std::string stamp_str = displayTimePoint(stamp);
+    CONSOLE_BRIDGE_logWarn(
+      "TF_OLD_DATA ignoring data from the past for frame %s at time %s according to authority"
+      " %s\nPossible reasons are listed at http://wiki.ros.org/tf/Errors%%20explained",
+      stripped_child_frame_id.c_str(), stamp_str.c_str(), authority.c_str());
+    return false;
   }
 
-  testTransformableRequests();
+  //MOD: Had to disable test
+  //testTransformableRequests();
 
   return true;
 }
 
-TimeCacheInterfacePtr BufferCore::allocateFrame(CompactFrameID cfid, bool is_static)
-{
-  TimeCacheInterfacePtr frame_ptr = frames_[cfid];
-  if (is_static) {
-    frames_[cfid] = TimeCacheInterfacePtr(new StaticCache());
-  } else {
-    frames_[cfid] = TimeCacheInterfacePtr(new TimeCache(cache_time_));
-  }
-
-  return frames_[cfid];
-}
+//TimeCacheInterfacePtr BufferCore::allocateFrame(CompactFrameID cfid, bool is_static)
+//{
+//  TimeCacheInterfacePtr frame_ptr = frames_[cfid];
+//  if (is_static) {
+//    frames_[cfid] = TimeCacheInterfacePtr(new StaticCache());
+//  } else {
+//    frames_[cfid] = TimeCacheInterfacePtr(new TimeCache(cache_time_));
+//  }
+//
+//  return frames_[cfid];
+//}
 
 enum WalkEnding
 {
@@ -1244,6 +1269,7 @@ TransformableRequestHandle BufferCore::addTransformableRequest(
     return 0;
   }
 
+  /* MOD: Could turn this check back on just for time based caches
   // Might not be transformable at all, ever (if it's too far in the past)
   if (req.target_id && req.source_id) {
     TimePoint latest_time;
@@ -1254,6 +1280,7 @@ TransformableRequestHandle BufferCore::addTransformableRequest(
       return 0xffffffffffffffffULL;
     }
   }
+  */
 
   {
     std::unique_lock<std::mutex> lock(transformable_callbacks_mutex_);
@@ -1339,6 +1366,7 @@ void BufferCore::_getFrameStrings(std::vector<std::string> & vec) const
   }
 }
 
+/* MOD: Depends on cache time existing
 void BufferCore::testTransformableRequests()
 {
   std::unique_lock<std::mutex> lock(transformable_requests_mutex_);
@@ -1398,6 +1426,7 @@ void BufferCore::testTransformableRequests()
     }
   }
 }
+*/
 
 std::string BufferCore::_allFramesAsDot(TimePoint current_time) const
 {
