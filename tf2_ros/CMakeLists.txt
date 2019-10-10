@@ -16,14 +16,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
-find_package(tf2 0.12.0 EXACT REQUIRED HINTS /home/smcmich1/repo/ros2/vipersim_ws/install/tf2)
+find_package(tf2)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
-
-list(REMOVE_ITEM tf2_INCLUDE_DIRS /home/smcmich1/repo/ros2/ros2-linux-1620/include)
-
 
 include_directories(include ${tf2_INCLUDE_DIRS})
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR src/${PROJECT_NAME})
