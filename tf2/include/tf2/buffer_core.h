@@ -58,8 +58,11 @@ typedef std::pair<ros::Time, CompactFrameID> P_TimeAndFrameID;
 typedef uint32_t TransformableCallbackHandle;
 typedef uint64_t TransformableRequestHandle;
 
+
 class TimeCacheInterface;
-typedef boost::shared_ptr<TimeCacheInterface> TimeCacheInterfacePtr;
+using TimeCacheInterfacePtr = boost::shared_ptr<TimeCacheInterface>;
+class CacheCreatorInterface;
+using CacheCreatorPtr = boost::shared_ptr<CacheCreatorInterface>;
 
 enum TransformableResult
 {
@@ -97,7 +100,11 @@ public:
    * \param cache_time How long to keep a history of transforms in nanoseconds
    *
    */
-  BufferCore(ros::Duration cache_time_ = ros::Duration(DEFAULT_CACHE_TIME));
+  BufferCore(ros::Duration cache_time_);
+  
+  /// MOD Flexible cache creation constructor
+  BufferCore(CacheCreatorPtr ptr=CacheCreatorPtr());
+
   virtual ~BufferCore(void);
 
   /** \brief Clear all data */
@@ -291,8 +298,9 @@ public:
     return validateFrameId(function_name_arg, frame_id);
   }
 
+  //MOD: Not really valid, only provided so that the tf library can use it!!!!
   /**@brief Get the duration over which this transformer will cache */
-  ros::Duration getCacheLength() { return cache_time_;}
+  ros::Duration getCacheLength() { return ros::Duration(DEFAULT_CACHE_TIME);}
 
   /** \brief Backwards compatabilityA way to see what frames have been cached
    * Useful for debugging
@@ -331,9 +339,8 @@ private:
   /** \brief A map to lookup the most recent authority for a given frame */
   std::map<CompactFrameID, std::string> frame_authority_;
 
-
-  /// How long to cache transform history
-  ros::Duration cache_time_;
+  /// Pointer to the cache creator object
+  CacheCreatorPtr cache_creator_ptr_;
 
   typedef boost::unordered_map<TransformableCallbackHandle, TransformableCallback> M_TransformableCallback;
   M_TransformableCallback transformable_callbacks_;
@@ -374,7 +381,8 @@ private:
    */
   TimeCacheInterfacePtr getFrame(CompactFrameID c_frame_id) const;
 
-  TimeCacheInterfacePtr allocateFrame(CompactFrameID cfid, bool is_static);
+  //MOD: Replaced by new cache creator
+  //TimeCacheInterfacePtr allocateFrame(CompactFrameID cfid, bool is_static);
 
 
   bool warnFrameId(const char* function_name_arg, const std::string& frame_id) const;
@@ -403,7 +411,8 @@ private:
   template<typename F>
   int walkToTopParent(F& f, ros::Time time, CompactFrameID target_id, CompactFrameID source_id, std::string* error_string, std::vector<CompactFrameID> *frame_chain) const;
 
-  void testTransformableRequests();
+  //MOD: Depends on cache time existing
+  //void testTransformableRequests();
   bool canTransformInternal(CompactFrameID target_id, CompactFrameID source_id,
                     const ros::Time& time, std::string* error_msg) const;
   bool canTransformNoLock(CompactFrameID target_id, CompactFrameID source_id,

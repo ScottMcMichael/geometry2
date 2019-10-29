@@ -85,7 +85,7 @@ public:
   virtual ros::Time getOldestTimestamp()=0;
 };
 
-typedef boost::shared_ptr<TimeCacheInterface> TimeCacheInterfacePtr;
+using TimeCacheInterfacePtr = boost::shared_ptr<TimeCacheInterface>;
 
 /** \brief A class to keep a sorted linked list in time
  * This builds and maintains a list of timestamped
@@ -157,6 +157,35 @@ private:
   TransformStorage  storage_;
 };
 
-}
+
+// TODO: Move!
+// Additional input parameters are needed here to support long term frame storage.
+struct CacheCreatorInterface
+{
+  virtual TimeCacheInterfacePtr createCache(bool is_static,
+                                            const std::string & parent_frame,
+                                            const std::string & child_frame,
+                                            const CompactFrameID parent_id,
+                                            const CompactFrameID child_id) = 0;
+};
+typedef boost::shared_ptr<CacheCreatorInterface> CacheCreatorPtr;
+
+/// Create a TimeCache object which keeps data in memory for a fixed amount of time.
+class TimeCacheCreator : public CacheCreatorInterface
+{
+  ros::Duration cache_time_;
+public:
+  TimeCacheCreator(ros::Duration cache_time)
+    : cache_time_(cache_time) {}
+
+  virtual TimeCacheInterfacePtr createCache(bool is_static,
+                                            const std::string & parent_frame,
+                                            const std::string & child_frame,
+                                            const CompactFrameID parent_id,
+                                            const CompactFrameID child_id);
+}; // End class TimeCacheCreator
+
+
+} // end namespace tf2
 
 #endif // TF2_TIME_CACHE_H

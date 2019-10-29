@@ -166,14 +166,30 @@ CompactFrameID BufferCore::validateFrameId(const char* function_name_arg, const 
 }
 
 BufferCore::BufferCore(ros::Duration cache_time)
-: cache_time_(cache_time)
-, transformable_callbacks_counter_(0)
-, transformable_requests_counter_(0)
-, using_dedicated_thread_(false)
+: //cache_time_(cache_time) // TODO: Delete this??
+  transformable_callbacks_counter_(0),
+  transformable_requests_counter_(0),
+  using_dedicated_thread_(false)
 {
   frameIDs_["NO_PARENT"] = 0;
   frames_.push_back(TimeCacheInterfacePtr());
   frameIDs_reverse.push_back("NO_PARENT");
+  cache_creator_ptr_.reset(new TimeCacheCreator(cache_time));
+}
+
+BufferCore::BufferCore(CacheCreatorPtr ptr)
+: //cache_time_(cache_time) // TODO: Delete this??
+  transformable_callbacks_counter_(0),
+  transformable_requests_counter_(0),
+  using_dedicated_thread_(false)
+{
+  frameIDs_["NO_PARENT"] = 0;
+  frames_.push_back(TimeCacheInterfacePtr());
+  frameIDs_reverse.push_back("NO_PARENT");
+  if (ptr)
+    cache_creator_ptr_ = ptr;
+  else // No object passed in, use the default cache creation strategy.
+    cache_creator_ptr_.reset(new TimeCacheCreator(ros::Duration(DEFAULT_CACHE_TIME)));
 }
 
 BufferCore::~BufferCore()
@@ -263,10 +279,18 @@ bool BufferCore::setTransform(const geometry_msgs::TransformStamped& transform_i
   
   {
     boost::mutex::scoped_lock lock(frame_mutex_);
-    CompactFrameID frame_number = lookupOrInsertFrameNumber(stripped.child_frame_id);
+    CompactFrameID frame_number        = lookupOrInsertFrameNumber(stripped.child_frame_id );
+    CompactFrameID parent_frame_number = lookupOrInsertFrameNumber(stripped.header.frame_id);
     TimeCacheInterfacePtr frame = getFrame(frame_number);
     if (frame == NULL)
-      frame = allocateFrame(frame_number, is_static);
+    {
+      frame = cache_creator_ptr_->createCache(is_static,
+                                              stripped.header.frame_id,
+                                              stripped.child_frame_id,
+                                              parent_frame_number,
+                                              frame_number);
+      frames_[frame_number] = frame;
+    }
 
     if (frame->insertData(TransformStorage(stripped, lookupOrInsertFrameNumber(stripped.header.frame_id), frame_number)))
     {
@@ -279,11 +303,12 @@ bool BufferCore::setTransform(const geometry_msgs::TransformStamped& transform_i
     }
   }
 
-  testTransformableRequests();
+  //MOD: Had to disable test
+  //testTransformableRequests();
 
   return true;
 }
-
+/*
 TimeCacheInterfacePtr BufferCore::allocateFrame(CompactFrameID cfid, bool is_static)
 {
   TimeCacheInterfacePtr frame_ptr = frames_[cfid];
@@ -295,6 +320,7 @@ TimeCacheInterfacePtr BufferCore::allocateFrame(CompactFrameID cfid, bool is_sta
 
   return frames_[cfid];
 }
+*/
 
 enum WalkEnding
 {
@@ -1281,6 +1307,7 @@ TransformableRequestHandle BufferCore::addTransformableRequest(TransformableCall
     return 0;
   }
 
+  /* MOD: Could turn this check back on just for time based caches
   // Might not be transformable at all, ever (if it's too far in the past)
   if (req.target_id && req.source_id)
   {
@@ -1293,6 +1320,7 @@ TransformableRequestHandle BufferCore::addTransformableRequest(TransformableCall
       return 0xffffffffffffffffULL;
     }
   }
+  */
 
   req.cb_handle = handle;
   req.time = time;
@@ -1401,7 +1429,7 @@ void BufferCore::_getFrameStrings(std::vector<std::string> & vec) const
 
 
 
-
+/* MOD
 void BufferCore::testTransformableRequests()
 {
   boost::mutex::scoped_lock lock(transformable_requests_mutex_);
@@ -1483,6 +1511,7 @@ void BufferCore::testTransformableRequests()
   // Backwards compatability callback for tf
   _transforms_changed_();
 }
+*/
 
 
 std::string BufferCore::_allFramesAsDot(double current_time) const

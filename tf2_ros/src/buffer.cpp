@@ -50,6 +50,18 @@ Buffer::Buffer(ros::Duration cache_time, bool debug) :
   }
 }
 
+Buffer::Buffer(tf2::CacheCreatorPtr ptr, bool debug) :
+  BufferCore(ptr)
+{
+  if(debug && !ros::service::exists("~tf2_frames", false))
+  {
+    ros::NodeHandle n("~");
+    frames_server_ = n.advertiseService("tf2_frames", &Buffer::getFrames, this);
+  }
+}
+
+
+
 geometry_msgs::TransformStamped 
 Buffer::lookupTransform(const std::string& target_frame, const std::string& source_frame,
                         const ros::Time& time, const ros::Duration timeout) const
