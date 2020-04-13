@@ -61,7 +61,7 @@ namespace tf2_ros
         {
           result->transform = lookupTransform(info.handle);
 
-          RCLCPP_DEBUG(
+          RCLCPP_INFO(
             logger_,
             "Can transform for goal %s",
             rclcpp_action::to_string(info.handle->get_goal_id()).c_str());
@@ -122,7 +122,7 @@ namespace tf2_ros
 
   rclcpp_action::CancelResponse BufferServer::cancelCB(GoalHandle gh)
   {
-    RCLCPP_DEBUG(
+    RCLCPP_INFO(
       logger_,
       "Cancel request for goal %s",
       rclcpp_action::to_string(gh->get_goal_id()).c_str());
@@ -136,7 +136,7 @@ namespace tf2_ros
       GoalInfo& info = *it;
       if(info.handle == gh)
       {
-        RCLCPP_DEBUG(
+        RCLCPP_INFO(
           logger_,
           "Accept cancel request for goal %s",
           rclcpp_action::to_string(gh->get_goal_id()).c_str());
@@ -149,7 +149,7 @@ namespace tf2_ros
         ++it;
     }
 
-    RCLCPP_DEBUG(
+    RCLCPP_INFO(
       logger_,
       "Reject cancel request for goal %s",
       rclcpp_action::to_string(gh->get_goal_id()).c_str());
@@ -168,7 +168,7 @@ namespace tf2_ros
 
   void BufferServer::acceptedCB(GoalHandle gh)
   {
-    RCLCPP_DEBUG(
+    RCLCPP_INFO(
       logger_,
       "New goal accepted with ID %s",
       rclcpp_action::to_string(gh->get_goal_id()).c_str());
@@ -218,7 +218,7 @@ namespace tf2_ros
         result->error.error_string = ex.what();
       }
 
-      RCLCPP_DEBUG(logger_, "Transform available immediately for new goal");
+      RCLCPP_INFO(logger_, "Transform available immediately for new goal");
       gh->succeed(result);
       return;
     }

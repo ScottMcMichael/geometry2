@@ -10,9 +10,15 @@ find_package(ament_cmake)
 find_package(console_bridge_vendor REQUIRED) # Provides console_bridge 0.4.0 on platforms without it.
 find_package(console_bridge REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(rcutils REQUIRED)
+find_package(rcutils 0.8.5 EXACT REQUIRED HINTS /home/smcmich1/repo/ros2/build_1786/vipersim_ws/install/rcutils)
 
-include_directories(include src/bt)
+# TODO FIX!
+#set(rcutils_INCLUDE_DIRS "/home/smcmich1/repo/ros2/build_1720/vipersim_ws/install/rcutils/include/")
+#set(rcutils_LIBRARIES "/home/smcmich1/repo/ros2/build_1720/vipersim_ws/install/rcutils/lib/librcutils.so")
+message("rcutils_INCLUDE_DIRS = ${rcutils_INCLUDE_DIRS}")
+message("rcutils_LIBRARIES = ${rcutils_LIBRARIES}")
+
+include_directories(include src/bt rcutils_INCLUDE_DIRS)
 
 # export user definitions
 
