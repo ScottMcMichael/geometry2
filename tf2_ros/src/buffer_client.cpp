@@ -82,7 +82,7 @@ namespace tf2_ros
     if (!client_->wait_for_action_server(tf2_ros::fromMsg(goal.timeout))) {
       throw tf2::ConnectivityException("Failed find available action server");
     }
-
+    std::cout << "Sending goal...\n";
     auto goal_handle_future = client_->async_send_goal(goal);
 
     const std::chrono::milliseconds period(static_cast<int>((1.0 / check_frequency_) * 1000));
@@ -93,6 +93,7 @@ namespace tf2_ros
       ready = (std::future_status::ready == goal_handle_future.wait_for(period));
       timed_out = tf2::get_now() > start_time + tf2_ros::fromMsg(goal.timeout) + timeout_padding_;
     }
+    std::cout << "ready = " << ready << std::endl;
 
     if (timed_out) {
       throw tf2::TimeoutException("Did not receive the goal response for the goal sent to "

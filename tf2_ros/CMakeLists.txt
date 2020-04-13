@@ -13,16 +13,28 @@ if(NOT ANDROID)
   set(TF2_PY tf2_py)
 endif()
 
+find_package(rcutils 0.8.5 EXACT REQUIRED HINTS /home/smcmich1/repo/ros2/build_1786/vipersim_ws/install/rcutils)
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
-find_package(tf2)
+find_package(tf2 0.12.4 EXACT REQUIRED HINTS /home/smcmich1/repo/ros2/build_1786/vipersim_ws/install/tf2)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
 
+
+
+list(REMOVE_ITEM tf2_INCLUDE_DIRS /home/smcmich1/repo/ros2/build_1786/ros2-linux/include)
+list(REMOVE_ITEM tf2_LIBRARIES /home/smcmich1/repo/ros2/build_1786/ros2-linux/lib/librcutils.so)
+
+message("tf2_INCLUDE_DIRS = ${tf2_INCLUDE_DIRS}")
+message("tf2_LIBRARIES = ${tf2_LIBRARIES}")
+message("rcutils_INCLUDE_DIRS = ${rcutils_INCLUDE_DIRS}")
+message("rcutils_LIBRARIES = ${rcutils_LIBRARIES}")
+
 include_directories(include ${tf2_INCLUDE_DIRS})
+
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR src/${PROJECT_NAME})
 
 # tf2_ros library
