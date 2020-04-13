@@ -255,6 +255,7 @@ namespace tf2_ros
 
     bool getFrames(const tf2_msgs::srv::FrameGraph::Request::SharedPtr req, tf2_msgs::srv::FrameGraph::Response::SharedPtr res) ;
 
+    void onTimeJumpPre();
     void onTimeJump(const rcl_time_jump_t & jump);
 
     // conditionally error if dedicated_thread unset.

@@ -228,8 +228,12 @@ bool TimeCache::insertData(const TransformStorage & new_data)
 {
   L_TransformStorage::iterator storage_it = storage_.begin();
 
-  if (storage_it != storage_.end()) {
-    if (storage_it->stamp_ > new_data.stamp_ + max_storage_time_) {
+  if(storage_it != storage_.end())
+  {
+    if (storage_it->stamp_ > new_data.stamp_ + max_storage_time_)
+    {
+      std::cout << "storage_it->stamp_ = " << displayTimePoint(storage_it->stamp_) << std::endl;
+      std::cout << "new_data.stamp_ = " << displayTimePoint(new_data.stamp_) << std::endl;
       return false;
     }
   }

@@ -57,6 +57,7 @@ Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time, rclcpp:
     throw std::invalid_argument("clock must be a valid instance");
   }
 
+  auto pre_jump_cb = [this]() { onTimeJumpPre(); };
   auto post_jump_cb = [this](const rcl_time_jump_t & jump_info) { onTimeJump(jump_info); };
 
   rcl_jump_threshold_t jump_threshold;
@@ -67,7 +68,7 @@ Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time, rclcpp:
   // Callback if the clock changes too
   jump_threshold.on_clock_change = true;
 
-  jump_handler_ = clock_->create_jump_callback(nullptr, post_jump_cb, jump_threshold);
+  jump_handler_ = clock_->create_jump_callback(pre_jump_cb, post_jump_cb, jump_threshold);
 
   if (node_) {
     frames_server_ = node_->create_service<tf2_msgs::srv::FrameGraph>(
@@ -127,6 +128,12 @@ Buffer::lookupTransform(const std::string& target_frame, const std::string& sour
   return lookupTransform(target_frame, source_frame, lookup_time);
 }
 
+
+void Buffer::onTimeJumpPre()
+{
+  ROS_WARN("\nPRE-CLOCK %lf:%ld\n", clock_->now().seconds(), clock_->now().nanoseconds());
+}
+
 void Buffer::onTimeJump(const struct rcl_time_jump_t & time_jump)
 {
   if (RCL_ROS_TIME_ACTIVATED == time_jump.clock_change ||
@@ -137,6 +144,8 @@ void Buffer::onTimeJump(const struct rcl_time_jump_t & time_jump)
   }
   else if (time_jump.delta.nanoseconds < 0)
   {
+    ROS_WARN("\nCLOCK %lf:%ld,  delta =  %ld\n", clock_->now().seconds(), clock_->now().nanoseconds(),
+             time_jump.delta.nanoseconds);
     ROS_WARN("Detected jump back in time. Clearing TF buffer.");
     clear();
   }
