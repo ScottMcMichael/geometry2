@@ -24,7 +24,15 @@ find_package(tf2_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
 
 # Fix problem with Ros2 not finding our TF2 version
-set(tf2_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/../tf2/include)
+set(tf2_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include)
+string(REPLACE "tf2_ros" "tf2" tf2_INCLUDE_DIRS  ${tf2_INCLUDE_DIRS})
+
+set(lib_path ${CMAKE_INSTALL_PREFIX}/lib/libtf2.so)
+string(REPLACE "tf2_ros/lib" "tf2/lib" lib_path  ${lib_path})
+
+list(FILTER tf2_LIBRARIES EXCLUDE REGEX ".*libtf2.so")
+list(APPEND tf2_LIBRARIES ${lib_path})
+
 
 include_directories(include ${tf2_INCLUDE_DIRS})
 
