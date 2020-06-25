@@ -16,8 +16,6 @@ find_package(console_bridge REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rcutils REQUIRED)
 
-include_directories(include src/bt rcutils_INCLUDE_DIRS)
-
 # export user definitions
 
 #CPP Libraries
