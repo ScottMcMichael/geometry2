@@ -188,6 +188,7 @@ private:
 // Additional input parameters are needed here to support long term frame storage.
 struct CacheCreatorInterface
 {
+  TF2_PUBLIC
   virtual TimeCacheInterfacePtr createCache(bool is_static,
                                             const std::string & parent_frame,
                                             const std::string & child_frame,
@@ -201,9 +202,11 @@ class TimeCacheCreator : public CacheCreatorInterface
 {
   Duration cache_time_;
 public:
+  TF2_PUBLIC
   TimeCacheCreator(Duration cache_time)
     : cache_time_(cache_time) {}
 
+  TF2_PUBLIC
   virtual TimeCacheInterfacePtr createCache(bool is_static,
                                             const std::string & parent_frame,
                                             const std::string & child_frame,

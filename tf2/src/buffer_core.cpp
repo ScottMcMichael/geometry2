@@ -356,32 +356,34 @@ bool BufferCore::setTransformImpl(
                                               parent_frame_number,
                                               frame_number);
       frames_[frame_number] = frame;
-    } else {
+    }
+    //else { // TODO: Is this logic needed? tricky to integrate with DB cache.
       // TODO: This logic is incomplete as it does not handle any other derived
       //       types!
       // Overwrite TimeCacheInterface type with a current input
-      const TimeCache * time_cache_ptr = dynamic_cast<TimeCache *>(frame.get());
-      const StaticCache * static_cache_ptr = dynamic_cast<StaticCache *>(frame.get());
-      if (time_cache_ptr && is_static) {
-        frame = allocateFrame(frame_number, is_static);
-      } else if (static_cache_ptr && !is_static) {
-        frame = allocateFrame(frame_number, is_static);
-      }
-    }
+    //  const TimeCache * time_cache_ptr = dynamic_cast<TimeCache *>(frame.get());
+    //  const StaticCache * static_cache_ptr = dynamic_cast<StaticCache *>(frame.get());
+    //  if (time_cache_ptr && is_static) {
+    //    frame = allocateFrame(frame_number, is_static);
+    //  } else if (static_cache_ptr && !is_static) {
+    //    frame = allocateFrame(frame_number, is_static);
+    //  }
+    //}
 
-  if (frame->insertData(
-      TransformStorage(
-        stamp, transform_in.getRotation(),
-        transform_in.getOrigin(), lookupOrInsertFrameNumber(stripped_frame_id), frame_number)))
-  {
-    frame_authority_[frame_number] = authority;
-  } else {
-    std::string stamp_str = displayTimePoint(stamp);
-    CONSOLE_BRIDGE_logWarn(
-      "TF_OLD_DATA ignoring data from the past for frame %s at time %s according to authority"
-      " %s\nPossible reasons are listed at http://wiki.ros.org/tf/Errors%%20explained",
-      stripped_child_frame_id.c_str(), stamp_str.c_str(), authority.c_str());
-    return false;
+    if (frame->insertData(
+        TransformStorage(
+          stamp, transform_in.getRotation(),
+          transform_in.getOrigin(), lookupOrInsertFrameNumber(stripped_frame_id), frame_number)))
+    {
+      frame_authority_[frame_number] = authority;
+    } else {
+      std::string stamp_str = displayTimePoint(stamp);
+      CONSOLE_BRIDGE_logWarn(
+        "TF_OLD_DATA ignoring data from the past for frame %s at time %s according to authority"
+        " %s\nPossible reasons are listed at http://wiki.ros.org/tf/Errors%%20explained",
+        stripped_child_frame_id.c_str(), stamp_str.c_str(), authority.c_str());
+      return false;
+    }
   }
 
   //MOD: Had to disable test

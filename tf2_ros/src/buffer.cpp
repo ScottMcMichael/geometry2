@@ -77,14 +77,15 @@ Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time, rclcpp:
 }
 
 
-Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::CacheCreatorPtr ptr) :
-  BufferCore(ptr), clock_(clock), timer_interface_(nullptr)
+Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::CacheCreatorPtr ptr, rclcpp::Node::SharedPtr node) :
+  BufferCore(ptr), clock_(clock), node_(node), timer_interface_(nullptr)
 {
   if (nullptr == clock_)
   {
     throw std::invalid_argument("clock must be a valid instance");
   }
 
+  auto pre_jump_cb = [this]() { onTimeJumpPre(); };
   auto post_jump_cb = [this](const rcl_time_jump_t & jump_info) { onTimeJump(jump_info); };
 
   rcl_jump_threshold_t jump_threshold;
@@ -95,14 +96,12 @@ Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::CacheCreatorPtr ptr) :
   // Callback if the clock changes too
   jump_threshold.on_clock_change = true;
 
-  jump_handler_ = clock_->create_jump_callback(nullptr, post_jump_cb, jump_threshold);
+  jump_handler_ = clock_->create_jump_callback(pre_jump_cb, post_jump_cb, jump_threshold);
 
-  // TODO(tfoote) reenable 
-  // if(debug && !ros::exists("~tf2_frames", false))
-  // {
-  //   ros::NodeHandle n("~");
-  //   frames_server_ = n.advertiseService("tf2_frames", &Buffer::getFrames, this);
-  // }
+  if (node_) {
+    frames_server_ = node_->create_service<tf2_msgs::srv::FrameGraph>(
+      "tf2_frames", std::bind(&Buffer::getFrames, this, std::placeholders::_1, std::placeholders::_2));
+  }
 }
 
 
