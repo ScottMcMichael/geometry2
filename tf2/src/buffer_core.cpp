@@ -212,10 +212,11 @@ CompactFrameID BufferCore::validateFrameId(
 
 BufferCore::BufferCore(tf2::Duration cache_time)
 : //cache_time_(cache_time) // TODO: Delete this??
- transformable_callbacks_counter_(0)
-, transformable_requests_counter_(0)
-, using_dedicated_thread_(false)
+  transformable_callbacks_counter_(0),
+  transformable_requests_counter_(0),
+  using_dedicated_thread_(false)
 {
+  printf("Constructing bufferCore\n");
   frameIDs_["NO_PARENT"] = 0;
   frames_.push_back(TimeCacheInterfacePtr());
   frameIDs_reverse_.push_back("NO_PARENT");
@@ -224,15 +225,15 @@ BufferCore::BufferCore(tf2::Duration cache_time)
 
 BufferCore::BufferCore(CacheCreatorPtr ptr)
 : //cache_time_(cache_time) // TODO: Delete this??
- transformable_callbacks_counter_(0)
-, transformable_requests_counter_(0)
-, using_dedicated_thread_(false)
+  transformable_callbacks_counter_(0),
+  transformable_requests_counter_(0),
+  using_dedicated_thread_(false)
 {
   frameIDs_["NO_PARENT"] = 0;
   frames_.push_back(TimeCacheInterfacePtr());
   frameIDs_reverse_.push_back("NO_PARENT");
   if (ptr)
-    cache_creator_ptr_ = ptr;
+    cache_creator_ptr_ = std::move(ptr);
   else // No object passed in, use the default cache creation strategy.
     cache_creator_ptr_.reset(new TimeCacheCreator(BUFFER_CORE_DEFAULT_CACHE_TIME));
 }

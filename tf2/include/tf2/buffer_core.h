@@ -59,7 +59,8 @@ typedef uint64_t TransformableRequestHandle;
 class TimeCacheInterface;
 using TimeCacheInterfacePtr = std::shared_ptr<TimeCacheInterface>;
 class CacheCreatorInterface;
-using CacheCreatorPtr = std::shared_ptr<CacheCreatorInterface>;
+using CacheCreatorPtr = std::unique_ptr<CacheCreatorInterface>;
+
 
 enum TransformableResult
 {
@@ -103,13 +104,12 @@ public:
    *
    */
   TF2_PUBLIC
-  //MOD
-  explicit BufferCore(tf2::Duration cache_time_);
+  explicit BufferCore(tf2::Duration cache_time_=BUFFER_CORE_DEFAULT_CACHE_TIME);
 
   // MOD
   /** \brief Flexible constructor that works with other cache types*/
   TF2_PUBLIC
-  explicit BufferCore(CacheCreatorPtr ptr=CacheCreatorPtr());
+  explicit BufferCore(CacheCreatorPtr ptr);//=CacheCreatorPtr());
 
 
   TF2_PUBLIC
@@ -340,6 +340,8 @@ private:
 
   /// Pointer to the cache creator object
   CacheCreatorPtr cache_creator_ptr_;
+  //tf2::Duration cache_time_;
+
 
   typedef uint32_t TransformableCallbackHandle;
 

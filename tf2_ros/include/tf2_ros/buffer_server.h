@@ -48,8 +48,6 @@
 #include <tf2/buffer_core_interface.h>
 #include <tf2_ros/visibility_control.h>
 
-#include <tf2_ros/visibility_control.h>
-
 namespace tf2_ros
 {
   /** \brief Action server for the action-based implementation of tf2::BufferCoreInterface.

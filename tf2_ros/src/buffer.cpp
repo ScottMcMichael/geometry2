@@ -31,6 +31,7 @@
 
 
 #include "tf2_ros/buffer.h"
+#include "tf2/time_cache.h"
 
 
 #include <exception>
@@ -78,7 +79,7 @@ Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::Duration cache_time, rclcpp:
 
 
 Buffer::Buffer(rclcpp::Clock::SharedPtr clock, tf2::CacheCreatorPtr ptr, rclcpp::Node::SharedPtr node) :
-  BufferCore(ptr), clock_(clock), node_(node), timer_interface_(nullptr)
+  BufferCore(std::move(ptr)), clock_(clock), node_(node), timer_interface_(nullptr)
 {
   if (nullptr == clock_)
   {
@@ -130,7 +131,7 @@ Buffer::lookupTransform(const std::string& target_frame, const std::string& sour
 
 void Buffer::onTimeJumpPre()
 {
-  ROS_WARN("\nPRE-CLOCK %lf:%ld\n", clock_->now().seconds(), clock_->now().nanoseconds());
+  //ROS_WARN("\nPRE-CLOCK %lf:%ld\n", clock_->now().seconds(), clock_->now().nanoseconds());
 }
 
 void Buffer::onTimeJump(const struct rcl_time_jump_t & time_jump)

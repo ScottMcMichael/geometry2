@@ -189,13 +189,16 @@ private:
 struct CacheCreatorInterface
 {
   TF2_PUBLIC
+  virtual ~CacheCreatorInterface() = default;
+
+  TF2_PUBLIC
   virtual TimeCacheInterfacePtr createCache(bool is_static,
                                             const std::string & parent_frame,
                                             const std::string & child_frame,
                                             const CompactFrameID parent_id,
                                             const CompactFrameID child_id) = 0;
 };
-typedef std::shared_ptr<CacheCreatorInterface> CacheCreatorPtr;
+typedef std::unique_ptr<CacheCreatorInterface> CacheCreatorPtr;
 
 /// Create a TimeCache object which keeps data in memory for a fixed amount of time.
 class TimeCacheCreator : public CacheCreatorInterface
@@ -205,6 +208,9 @@ public:
   TF2_PUBLIC
   TimeCacheCreator(Duration cache_time)
     : cache_time_(cache_time) {}
+
+  TF2_PUBLIC
+  virtual ~TimeCacheCreator() = default;
 
   TF2_PUBLIC
   virtual TimeCacheInterfacePtr createCache(bool is_static,
